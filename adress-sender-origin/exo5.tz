@@ -1,0 +1,62 @@
+parameter (or (int %add) (int %sub));
+storage   (pair (address %lastUser) (int %total));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    IF_LEFT
+      {
+        # == add ==
+        # if sp.sender == self.data.lastUser: # @parameter%add : @storage
+        DUP 2;      # @storage : @parameter%add : @storage
+        CAR;        # address : @parameter%add : @storage
+        SENDER;     # @sender : address : @parameter%add : @storage
+        COMPARE;    # int : @parameter%add : @storage
+        EQ;         # bool : @parameter%add : @storage
+        IF
+          {
+            PUSH string "Cannot call twice, Not Autorized"; # string : @parameter%add : @storage
+            FAILWITH;   # FAILED
+          }
+          {
+            SWAP;       # @storage : @parameter%add
+            # self.data.lastUser = sp.sender # @storage : @parameter%add
+            SENDER;     # @sender : @storage : @parameter%add
+            UPDATE 1;   # @storage : @parameter%add
+            # self.data.total += value # @storage : @parameter%add
+            DUP;        # @storage : @storage : @parameter%add
+            CDR;        # int : @storage : @parameter%add
+            DIG 2;      # @parameter%add : int : @storage
+            ADD;        # int : @storage
+            UPDATE 2;   # @storage
+          }; # @storage
+      }
+      {
+        # == sub ==
+        # if sp.sender == self.data.lastUser: # @parameter%sub : @storage
+        DUP 2;      # @storage : @parameter%sub : @storage
+        CAR;        # address : @parameter%sub : @storage
+        SENDER;     # @sender : address : @parameter%sub : @storage
+        COMPARE;    # int : @parameter%sub : @storage
+        EQ;         # bool : @parameter%sub : @storage
+        IF
+          {
+            PUSH string "Cannot call twice, Not Autorized"; # string : @parameter%sub : @storage
+            FAILWITH;   # FAILED
+          }
+          {
+            SWAP;       # @storage : @parameter%sub
+            # self.data.lastUser = sp.sender # @storage : @parameter%sub
+            SENDER;     # @sender : @storage : @parameter%sub
+            UPDATE 1;   # @storage : @parameter%sub
+            # self.data.total -= value # @storage : @parameter%sub
+            DUP;        # @storage : @storage : @parameter%sub
+            CDR;        # int : @storage : @parameter%sub
+            DIG 2;      # @parameter%sub : int : @storage
+            SWAP;       # int : @parameter%sub : @storage
+            SUB;        # int : @storage
+            UPDATE 2;   # @storage
+          }; # @storage
+      }; # @storage
+    NIL operation; # list operation : @storage
+    PAIR;       # pair (list operation) @storage
+  };
