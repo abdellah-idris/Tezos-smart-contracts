@@ -1,0 +1,17 @@
+parameter (string %concatenate);
+storage   string;
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    SWAP;       # @storage : @parameter
+    # == concatenate ==
+    # self.data.text += input + "," # @storage : @parameter
+    PUSH string ","; # string : @storage : @parameter
+    DIG 2;      # @parameter : string : @storage
+    CONCAT;     # string : @storage
+    SWAP;       # @storage : string
+    CONCAT;     # string
+    NIL operation; # list operation : string
+    PAIR;       # pair (list operation) string
+  };
+
