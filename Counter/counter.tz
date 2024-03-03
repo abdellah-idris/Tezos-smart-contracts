@@ -1,0 +1,12 @@
+parameter (unit %inc);
+storage   int;
+code
+  {
+    CDR;        # @storage
+    # == inc ==
+    # self.data.v += 1 # @storage
+    PUSH int 1; # int : @storage
+    ADD;        # int
+    NIL operation; # list operation : int
+    PAIR;       # pair (list operation) int
+  };
