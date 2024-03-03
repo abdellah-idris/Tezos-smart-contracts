@@ -1,0 +1,25 @@
+parameter (string %concatenate);
+storage   (pair (int %counter) (string %text));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    SWAP;       # @storage : @parameter
+    # == concatenate ==
+    # self.data.text += input + "," # @storage : @parameter
+    DUP;        # @storage : @storage : @parameter
+    CDR;        # string : @storage : @parameter
+    PUSH string ","; # string : string : @storage : @parameter
+    DIG 3;      # @parameter : string : string : @storage
+    CONCAT;     # string : string : @storage
+    SWAP;       # string : string : @storage
+    CONCAT;     # string : @storage
+    UPDATE 2;   # @storage
+    # self.data.counter += 1 # @storage
+    DUP;        # @storage : @storage
+    CAR;        # int : @storage
+    PUSH int 1; # int : int : @storage
+    ADD;        # int : @storage
+    UPDATE 1;   # @storage
+    NIL operation; # list operation : @storage
+    PAIR;       # pair (list operation) @storage
+  };
