@@ -1,0 +1,87 @@
+parameter (or (unit %donate) (mutez %withdraw));
+storage   (pair (mutez %balance) (address %owner));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    IF_LEFT
+      {
+        DROP;       # @storage
+        # == donate ==
+        # assert sp.amount > sp.mutez(0), "Cannot donate amount < 0 tez" # @storage
+        PUSH mutez 0; # mutez : @storage
+        AMOUNT;     # @amount : mutez : @storage
+        COMPARE;    # int : @storage
+        GT;         # bool : @storage
+        IF
+          {}
+          {
+            PUSH string "Cannot donate amount < 0 tez"; # string : @storage
+            FAILWITH;   # FAILED
+          }; # @storage
+        # self.data.balance += sp.amount # @storage
+        DUP;        # @storage : @storage
+        CAR;        # mutez : @storage
+        AMOUNT;     # @amount : mutez : @storage
+        ADD;        # mutez : @storage
+        UPDATE 1;   # @storage
+        NIL operation; # list operation : @storage
+      }
+      {
+        # == withdraw ==
+        # assert sp.sender == self.data.owner, "Only the owner can withdraw" # @parameter%withdraw : @storage
+        DUP 2;      # @storage : @parameter%withdraw : @storage
+        CDR;        # address : @parameter%withdraw : @storage
+        SENDER;     # @sender : address : @parameter%withdraw : @storage
+        COMPARE;    # int : @parameter%withdraw : @storage
+        EQ;         # bool : @parameter%withdraw : @storage
+        IF
+          {}
+          {
+            PUSH string "Only the owner can withdraw"; # string : @parameter%withdraw : @storage
+            FAILWITH;   # FAILED
+          }; # @parameter%withdraw : @storage
+        # assert self.data.balance >= amount, "Insufficient balance" # @parameter%withdraw : @storage
+        DUP;        # @parameter%withdraw : @parameter%withdraw : @storage
+        DUP 3;      # @storage : @parameter%withdraw : @parameter%withdraw : @storage
+        CAR;        # mutez : @parameter%withdraw : @parameter%withdraw : @storage
+        COMPARE;    # int : @parameter%withdraw : @storage
+        GE;         # bool : @parameter%withdraw : @storage
+        IF
+          {}
+          {
+            PUSH string "Insufficient balance"; # string : @parameter%withdraw : @storage
+            FAILWITH;   # FAILED
+          }; # @parameter%withdraw : @storage
+        # sp.send(self.data.owner, amount) # @parameter%withdraw : @storage
+        NIL operation; # list operation : @parameter%withdraw : @storage
+        DUP 3;      # @storage : list operation : @parameter%withdraw : @storage
+        CDR;        # address : list operation : @parameter%withdraw : @storage
+        CONTRACT unit; # option (contract unit) : list operation : @parameter%withdraw : @storage
+        IF_NONE
+          {
+            PUSH int 21; # int : list operation : @parameter%withdraw : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : list operation : @parameter%withdraw : @storage
+        DUP 3;      # @parameter%withdraw : @some : list operation : @parameter%withdraw : @storage
+        UNIT;       # unit : @parameter%withdraw : @some : list operation : @parameter%withdraw : @storage
+        TRANSFER_TOKENS; # operation : list operation : @parameter%withdraw : @storage
+        CONS;       # list operation : @parameter%withdraw : @storage
+        # self.data.balance -= amount # list operation : @parameter%withdraw : @storage
+        DIG 2;      # @storage : list operation : @parameter%withdraw
+        DUP;        # @storage : @storage : list operation : @parameter%withdraw
+        CAR;        # mutez : @storage : list operation : @parameter%withdraw
+        DIG 3;      # @parameter%withdraw : mutez : @storage : list operation
+        SWAP;       # mutez : @parameter%withdraw : @storage : list operation
+        SUB_MUTEZ;  # option mutez : @storage : list operation
+        IF_NONE
+          {
+            PUSH int 22; # int : @storage : list operation
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @storage : list operation
+        UPDATE 1;   # @storage : list operation
+        SWAP;       # list operation : @storage
+      }; # list operation : @storage
+    PAIR;       # pair (list operation) @storage
+  };
